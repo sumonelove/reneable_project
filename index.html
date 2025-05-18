@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Solar PV Logger</title>
+  <link rel="stylesheet" href="./style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+</head>
+<body>
+  <header>
+    <h1>☀️ Solar Panel Data Logger and Fault Analysis Tools</h1>
+    <p>Manual Data Entry System for Power & Fault Analysis</p>
+  </header>
+
+  <main>
+    <!-- 🔧 Data Entry -->
+    <section class="card">
+      <h2>📥 Enter Data</h2>
+      <form id="logForm" class="form-grid">
+        <div class="form-group">
+          <label for="voltage">Voltage (V)</label>
+          <input type="number" id="voltage" placeholder="e.g. 240" required>
+        </div>
+
+        <div class="form-group">
+          <label for="current">Current (A)</label>
+          <input type="number" id="current" placeholder="e.g. 5" required>
+        </div>
+
+        <div class="form-group">
+          <label for="panelTemp">Panel Temp (°C)</label>
+          <input type="number" id="panelTemp" placeholder="e.g. 45">
+        </div>
+
+        <div class="form-group">
+          <label for="ambientTemp">Ambient Temp (°C)</label>
+          <input type="number" id="ambientTemp" placeholder="e.g. 30">
+        </div>
+
+        <div class="form-group">
+          <label for="irradiance">Irradiance (W/m²)</label>
+          <input type="number" id="irradiance" placeholder="e.g. 800" required>
+        </div>
+
+        <div class="form-group">
+          <label for="rating">Panel Rating (W)</label>
+          <input type="number" id="rating" value="100" required>
+        </div>
+
+        <div class="form-group">
+          <label for="area">Panel Area (m²)</label>
+          <input type="number" id="area" value="1.6" required>
+        </div>
+
+        <div class="form-group full-width">
+          <button type="submit" class="primary-btn">➕ Add Entry</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- 📋 Data Log Table -->
+    <section>
+      <h2>📄 Data Logs</h2>
+      <table id="dataTable">
+        <thead>
+        <tr>
+            <th>Time</th><th>V</th><th>I</th><th>Power (W)</th><th>Eff. (%)</th>
+            <th>Rating (W)</th><th>Irra</th><th>P.Temp</th><th>A.Temp</th>
+        </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <!-- 📈 Graph Section -->
+    <section>
+      <h2>📊 Graph Panels</h2>
+
+      <h3>Power vs Time</h3>
+      <canvas id="powerGraph" height="100"></canvas>
+
+      <h3>Efficiency vs Time</h3>
+      <canvas id="efficiencyGraph" height="100"></canvas>
+
+      <h3>📉 Custom Graph</h3>
+      <label>X-Axis:</label>
+      <select id="xAxisSelect">
+        <option value="voltage">Voltage</option>
+        <option value="current">Current</option>
+        <option value="power">Power</option>
+        <option value="efficiency">Efficiency</option>
+        <option value="irradiance">Irradiance</option>
+        <option value="panelTemp">Panel Temp</option>
+        <option value="ambientTemp">Ambient Temp</option>
+      </select>
+
+      <label>Y-Axis:</label>
+      <select id="yAxisSelect">
+        <option value="voltage">Voltage</option>
+        <option value="current">Current</option>
+        <option value="power">Power</option>
+        <option value="efficiency">Efficiency</option>
+        <option value="irradiance">Irradiance</option>
+        <option value="panelTemp">Panel Temp</option>
+        <option value="ambientTemp">Ambient Temp</option>
+      </select>
+      <button type="button" onclick="plotCustomGraph()">📊 Plot Custom Graph</button>
+
+      <canvas id="customGraph" height="150"></canvas>
+    </section>
+
+    <!-- 🧾 Export Options -->
+    <section>
+      <h2>📤 Export & Data Control</h2>
+      <button onclick="exportToPDF()">🖨️ Export to PDF</button>
+      <button onclick="clearData()">🗑️ Clear All Data</button>
+    </section>
+
+    <!--  Fault analysis -->
+    <section class="card" id="fault-analysis">
+      <h2>🧠 Smart Fault Analysis Tool</h2>
+      <form id="faultForm" class="form-grid">
+
+        <div class="form-group">
+          <label for="f_theoryV">Rated Voltage (V)</label>
+          <input type="number" id="f_theoryV" placeholder="e.g. 240" required>
+        </div>
+
+        <div class="form-group">
+          <label for="f_theoryI">Rated Current (A)</label>
+          <input type="number" id="f_theoryI" placeholder="e.g. 5.5" required>
+        </div>
+
+        <div class="form-group">
+          <label for="f_voltage">Output Voltage (V)</label>
+          <input type="number" id="f_voltage" required>
+        </div>
+
+        <div class="form-group">
+          <label for="f_current">Output Current (A)</label>
+          <input type="number" id="f_current" required>
+        </div>
+
+        <div class="form-group">
+          <label for="f_irradiance">Irradiance (W/m²)</label>
+          <input type="number" id="f_irradiance" required>
+        </div>
+
+        <div class="form-group">
+          <label for="f_rating">Panel Rating (W)</label>
+          <input type="number" id="f_rating" value="100" required>
+        </div>
+
+        <div class="form-group">
+          <label for="f_area">Panel Area (m²)</label>
+          <input type="number" id="f_area" value="1.6" required>
+        </div>
+
+        <div class="form-group">
+          <label for="f_panelTemp">Panel Temperature (°C)</label>
+          <input type="number" id="f_panelTemp">
+        </div>
+
+        <div class="form-group">
+          <label for="f_ambientTemp">Ambient Temperature (°C)</label>
+          <input type="number" id="f_ambientTemp">
+        </div>
+
+        <div class="form-group">
+          <label for="f_shading">Shading Condition</label>
+          <select id="f_shading">
+            <option value="none">None</option>
+            <option value="partial">Partial</option>
+            <option value="full">Full</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="f_mismatch">Panel Mismatch?</label>
+          <select id="f_mismatch">
+            <option value="no">No</option>
+            <option value="yes">Yes</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="f_cable">Cable Condition</label>
+          <select id="f_cable">
+            <option value="ok">Good</option>
+            <option value="loose">Loose</option>
+            <option value="damaged">Damaged</option>
+          </select>
+        </div>
+
+        <div class="form-group full-width">
+          <button type="submit" class="primary-btn">🔍 Analyze</button>
+        </div>
+      </form>
+
+      <div id="faultResult" style="margin-top: 20px;"></div>
+    </section>
+
+
+  </main>
+
+  <footer>
+    <p>Developed by Nirmal Tudu, Arijeet Pal, Sumit Kumar Bisui, Sayan Charkrabarty<br>
+    Under the guidance of Dr. Jayanta Kumar Chandra</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
